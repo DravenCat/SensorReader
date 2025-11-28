@@ -24,10 +24,9 @@ def print_sensor_data(sensor_data):
 
 def receive(named_pipe, pipe_buffer):
     try:
-        # 读取数据
         result, data = win32file.ReadFile(named_pipe, pipe_buffer)
         if result == 0:
-            # 解码字节数据为字符串
+            # decode bytes into string
             message = data.decode('utf-8').rstrip('\x00')
             return message
         return None
