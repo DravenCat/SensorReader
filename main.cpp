@@ -171,21 +171,22 @@ string sensorDataToJson(const SensorData& data) {
     const char* port = "COM4";
     const char* pipeName = R"(\\.\pipe\test_pipe)";
 
-    if (reader.connect(port) && pipe.open(pipeName))
+    if (reader.connect(port))
     {
-        cerr << "Pipeline created. Sending sensor data..." << endl;
-        while (true)
-        {
-            string raw_data = reader.read();
-            if (!raw_data.empty())
+        if (pipe.open(pipeName)) {
+            cerr << "Pipeline created. Sending sensor data..." << endl;
+            while (true)
             {
-                SensorData sensor_data{};
-                parseData(raw_data, sensor_data);
-                string json_data = sensorDataToJson(sensor_data);
-                pipe.send(json_data.c_str(), json_data.length()+1);
+                string raw_data = reader.read();
+                if (!raw_data.empty())
+                {
+                    SensorData sensor_data{};
+                    parseData(raw_data, sensor_data);
+                    string json_data = sensorDataToJson(sensor_data);
+                    pipe.send(json_data.c_str(), json_data.length()+1);
+                }
             }
         }
-
     } else
     {
         cerr << "Port " << port<<" unavailable. Check other port" << endl;
