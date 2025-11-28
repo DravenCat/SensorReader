@@ -38,28 +38,28 @@ def receive(named_pipe, pipe_buffer):
 if __name__ == "__main__":
     print("\nRunning Pattern Recognition")
     pipe_name = "\\\\.\\pipe\\test_pipe"
-    pipe_buffer = 512
+    pipe_buffer_size = 512
+
+    # create named pipe
+    named_pipe = win32pipe.CreateNamedPipe(
+        pipe_name,
+        win32pipe.PIPE_ACCESS_DUPLEX,
+        win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_WAIT | win32pipe.PIPE_READMODE_MESSAGE,
+        win32pipe.PIPE_UNLIMITED_INSTANCES,
+        pipe_buffer_size,
+        pipe_buffer_size,
+        0,
+        None
+    )
 
     try:
-        # create named pipe
-        named_pipe = win32pipe.CreateNamedPipe(
-            pipe_name,
-            win32pipe.PIPE_ACCESS_DUPLEX,
-            win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_WAIT | win32pipe.PIPE_READMODE_MESSAGE,
-            win32pipe.PIPE_UNLIMITED_INSTANCES,
-            pipe_buffer,
-            pipe_buffer,
-            0,
-            None
-        )
-
         if named_pipe:
             print("Waiting for connection...")
             win32pipe.ConnectNamedPipe(named_pipe, None)
             print("Connected to C++ client")
 
             while True:
-                data = receive(named_pipe, pipe_buffer)
+                data = receive(named_pipe, pipe_buffer_size)
                 if data:
                     try:
                         # load json data
@@ -74,8 +74,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nExiting Pattern Recognition")
     finally:
-        # 清理资源
-        if 'named_pipe' in locals():
+        if named_pipe:
             win32pipe.DisconnectNamedPipe(named_pipe)
             win32file.CloseHandle(named_pipe)
         sys.exit(0)
