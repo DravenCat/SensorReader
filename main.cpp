@@ -168,7 +168,6 @@ string sensorDataToJson(const SensorData& data) {
 {
     SerialReader reader;
     WinPipe pipe;
-    char buffer_msg[BUFFER_SIZE];
     const char* port = "COM4";
     const char* pipeName = "\\\\.\\pipe\\test_pipe";
 

@@ -1,8 +1,8 @@
 import sys
 import win32pipe
 import win32file
-import struct
 import json
+
 
 def print_sensor_data(sensor_data):
     print(f"Temp: {sensor_data['temperature']} `C")
@@ -23,16 +23,12 @@ def print_sensor_data(sensor_data):
 
 
 def receive(named_pipe, pipe_buffer):
-    try:
-        result, data = win32file.ReadFile(named_pipe, pipe_buffer)
-        if result == 0:
-            # decode bytes into string
-            message = data.decode('utf-8').rstrip('\x00')
-            return message
-        return None
-    except Exception as e:
-        print(f"Read error: {e}")
-        return None
+    result, data = win32file.ReadFile(named_pipe, pipe_buffer)
+    if result == 0:
+        # decode bytes into string
+        message = data.decode('utf-8').rstrip('\x00')
+        return message
+    return None
 
 
 if __name__ == "__main__":
@@ -59,21 +55,25 @@ if __name__ == "__main__":
             print("Connected to C++ client")
 
             while True:
+
                 data = receive(named_pipe, pipe_buffer_size)
                 if data:
                     try:
                         # load json data
                         sensor_data = json.loads(data)
                         print_sensor_data(sensor_data)
-                        # add ML steps here
+                        # TODO: add ML steps here
+
 
                     except json.JSONDecodeError:
                         print("Raw message:", data)
                     print("-" * 50)
-
     except KeyboardInterrupt:
-        print("\nExiting Pattern Recognition")
+        print("\Keyboard interrupt. Exiting...")
+    except Exception as e:
+        print("Pipe closed. Exiting...")
     finally:
+        print("Exit Pattern Recognition")
         if named_pipe:
             win32pipe.DisconnectNamedPipe(named_pipe)
             win32file.CloseHandle(named_pipe)
