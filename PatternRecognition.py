@@ -36,45 +36,46 @@ if __name__ == "__main__":
     pipe_name = "\\\\.\\pipe\\test_pipe"
     pipe_buffer_size = 512
 
-    # create named pipe
-    named_pipe = win32pipe.CreateNamedPipe(
-        pipe_name,
-        win32pipe.PIPE_ACCESS_DUPLEX,
-        win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_WAIT | win32pipe.PIPE_READMODE_MESSAGE,
-        win32pipe.PIPE_UNLIMITED_INSTANCES,
-        pipe_buffer_size,
-        pipe_buffer_size,
-        0,
-        None
-    )
+    while True :
+        # create named pipe
+        named_pipe = win32pipe.CreateNamedPipe(
+            pipe_name,
+            win32pipe.PIPE_ACCESS_DUPLEX,
+            win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_WAIT | win32pipe.PIPE_READMODE_MESSAGE,
+            win32pipe.PIPE_UNLIMITED_INSTANCES,
+            pipe_buffer_size,
+            pipe_buffer_size,
+            0,
+            None
+        )
 
-    try:
-        if named_pipe:
-            print("Waiting for connection...")
-            win32pipe.ConnectNamedPipe(named_pipe, None)
-            print("Connected to C++ client")
+        try:
+            if named_pipe:
+                print("Waiting for connection...")
+                win32pipe.ConnectNamedPipe(named_pipe, None)
+                print("Connected to C++ client")
 
-            while True:
+                while True:
 
-                data = receive(named_pipe, pipe_buffer_size)
-                if data:
-                    try:
-                        # load json data
-                        sensor_data = json.loads(data)
-                        print_sensor_data(sensor_data)
-                        # TODO: add ML steps here
+                    data = receive(named_pipe, pipe_buffer_size)
+                    if data:
+                        try:
+                            # load json data
+                            sensor_data = json.loads(data)
+                            print_sensor_data(sensor_data)
+                            # TODO: add ML steps here
 
 
-                    except json.JSONDecodeError:
-                        print("Raw message:", data)
-                    print("-" * 50)
-    except KeyboardInterrupt:
-        print("Keyboard interrupt. Exiting...")
-    except Exception as e:
-        print("Pipe closed. Exiting...")
-    finally:
-        print("Exit Pattern Recognition")
-        if named_pipe:
-            win32pipe.DisconnectNamedPipe(named_pipe)
-            win32file.CloseHandle(named_pipe)
-        sys.exit(0)
+                        except json.JSONDecodeError:
+                            print("Raw message:", data)
+                        print("-" * 50)
+        except KeyboardInterrupt:
+            print("Keyboard interrupt. Exiting...")
+            print("Exit Pattern Recognition")
+            if named_pipe:
+                win32pipe.DisconnectNamedPipe(named_pipe)
+                win32file.CloseHandle(named_pipe)
+            sys.exit(0)
+        except Exception as e:
+            print("Pipe closed. Try to reopen...")
+            continue
