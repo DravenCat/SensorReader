@@ -2,19 +2,32 @@
 
 bool WinPipe::open(const char* pipeName)
 {
-    if (WaitNamedPipe(pipeName, NMPWAIT_WAIT_FOREVER))
+    int retry_count = 0;
+    const int max_retries = INT_MAX;
+    pipe_name = pipeName;
+    isOpen = false;
+
+    cerr << "Waiting for patter recognition service to start..." << endl;
+    while (retry_count < max_retries)
     {
-        hPipe = CreateFile(pipeName, GENERIC_WRITE, 0,
-            nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
-            nullptr);
-        if (hPipe == INVALID_HANDLE_VALUE)
+        if (WaitNamedPipe(pipeName, NMPWAIT_WAIT_FOREVER))
         {
-            cerr << "Failed to open pipe" << endl;
-            return false;
+            hPipe = CreateFile(pipeName, GENERIC_WRITE, 0,
+                nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+                nullptr);
+            if (hPipe == INVALID_HANDLE_VALUE)
+            {
+                cerr << "Failed to open pipe" << endl;
+                isOpen = false;
+                return false;
+            }
+            isOpen = true;
+            break;
         }
+        retry_count++;
+        Sleep(1000);
     }
-    isOpen = true;
-    return true;
+    return isOpen;
 }
 
 
@@ -26,7 +39,9 @@ void WinPipe::send(const char* buffer, int length)
         cout << "Sent data to Pipeline" << endl;
     } else
     {
-        cerr << "Failed to send data to Pipeline" << endl;
+        cerr << "Pipeline closed. Try to reopen..." << endl;
+        this->open(pipe_name);
+        cerr << "Pipeline created. Sending sensor data..." << endl;
     }
 }
 

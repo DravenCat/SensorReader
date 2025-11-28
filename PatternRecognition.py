@@ -69,7 +69,7 @@ if __name__ == "__main__":
                         print("Raw message:", data)
                     print("-" * 50)
     except KeyboardInterrupt:
-        print("\Keyboard interrupt. Exiting...")
+        print("Keyboard interrupt. Exiting...")
     except Exception as e:
         print("Pipe closed. Exiting...")
     finally:

@@ -4,8 +4,8 @@
 
 bool SerialReader::connect(const char* port, DWORD baud)
 {
-    hSerial = CreateFile(port, GENERIC_READ, 0, NULL,
-        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hSerial = CreateFile(port, GENERIC_READ, 0, nullptr,
+        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hSerial == INVALID_HANDLE_VALUE)
     {
         cerr << "Error opening serial port." << endl;
@@ -39,6 +39,7 @@ bool SerialReader::connect(const char* port, DWORD baud)
         return false;
     }
 
+    cerr << "Connected to " << port << endl;
     isConnected = true;
     return true;
 }
@@ -54,7 +55,7 @@ string SerialReader::read()
     char buffer[BUFFER_SIZE];
     DWORD bytesRead;
 
-    if (!ReadFile(hSerial, buffer, BUFFER_SIZE, &bytesRead, NULL))
+    if (!ReadFile(hSerial, buffer, BUFFER_SIZE, &bytesRead, nullptr))
     {
         cerr << "Error reading from serial port." << endl;
         CloseHandle(hSerial);

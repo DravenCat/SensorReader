@@ -173,9 +173,7 @@ string sensorDataToJson(const SensorData& data) {
 
     if (reader.connect(port) && pipe.open(pipeName))
     {
-
-        cerr << "Connected to " << port << endl;
-        cerr << "Sending sensor data to patter recognition app" << endl;
+        cerr << "Pipeline created. Sending sensor data..." << endl;
         while (true)
         {
             string raw_data = reader.read();
