@@ -21,6 +21,7 @@ def print_sensor_data(sensor_data):
     print(f"US Compensated: {sensor_data['us_compensated']} mm")
     print(f"Time of Flight: {sensor_data['time_of_flight']} ns")
 
+
 def receive(named_pipe, pipe_buffer):
     try:
         # 读取数据
@@ -34,41 +35,40 @@ def receive(named_pipe, pipe_buffer):
         print(f"Read error: {e}")
         return None
 
+
 if __name__ == "__main__":
     print("\nRunning Pattern Recognition")
     pipe_name = "\\\\.\\pipe\\test_pipe"
     pipe_buffer = 512
 
     try:
-        # 创建命名管道
+        # create named pipe
         named_pipe = win32pipe.CreateNamedPipe(
             pipe_name,
-            win32pipe.PIPE_ACCESS_DUPLEX,  # 改为双向以匹配C++端
+            win32pipe.PIPE_ACCESS_DUPLEX,
             win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_WAIT | win32pipe.PIPE_READMODE_MESSAGE,
             win32pipe.PIPE_UNLIMITED_INSTANCES,
             pipe_buffer,
             pipe_buffer,
-            0,  # 改为0表示无限等待
+            0,
             None
         )
 
         if named_pipe:
             print("Waiting for connection...")
-            # 等待连接
             win32pipe.ConnectNamedPipe(named_pipe, None)
             print("Connected to C++ client")
 
             while True:
                 data = receive(named_pipe, pipe_buffer)
                 if data:
-                    print("Received raw data:", data)
-
-                    # 尝试解析JSON数据
                     try:
+                        # load json data
                         sensor_data = json.loads(data)
                         print_sensor_data(sensor_data)
+                        # add ML steps here
+
                     except json.JSONDecodeError:
-                        # 如果不是JSON，直接打印原始数据
                         print("Raw message:", data)
                     print("-" * 50)
 

@@ -18,10 +18,10 @@ bool WinPipe::open(const char* pipeName)
 }
 
 
-void WinPipe::send(const char* buffer)
+void WinPipe::send(const char* buffer, int length)
 {
     DWORD bytesWritten;
-    if (WriteFile(hPipe, buffer, BUFFER_SIZE, &bytesWritten, nullptr))
+    if (WriteFile(hPipe, buffer, length, &bytesWritten, nullptr))
     {
         cout << "Sent data to Pipeline" << endl;
     } else

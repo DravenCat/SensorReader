@@ -164,7 +164,7 @@ string sensorDataToJson(const SensorData& data) {
 }
 
 
-int main()
+[[noreturn]] int main()
 {
     SerialReader reader;
     WinPipe pipe;
@@ -185,7 +185,7 @@ int main()
                 SensorData sensor_data{};
                 parseData(raw_data, sensor_data);
                 string json_data = sensorDataToJson(sensor_data);
-                pipe.send(json_data.c_str());
+                pipe.send(json_data.c_str(), json_data.length()+1);
             }
         }
 
@@ -193,6 +193,4 @@ int main()
     {
         cerr << "Port " << port<<" unavailable. Check other port" << endl;
     }
-
-    return 0;
 }
