@@ -2,6 +2,33 @@ import sys
 import win32pipe
 import win32file
 import json
+import csv
+import os
+
+
+def save_sensor_to_csv(sensor_data, csv_path="sensor_log.csv"):
+    """
+    Save one sensor_data dict into a CSV file.
+    If the file does not exist, create it and write the header.
+    Each key becomes a column; each call appends one row.
+    """
+
+    # Extract the column names from dict keys
+    fieldnames = list(sensor_data.keys())
+
+    # Check if file exists
+    file_exists = os.path.isfile(csv_path)
+
+    # Open file for append
+    with open(csv_path, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+
+        # If first time, write header
+        if not file_exists:
+            writer.writeheader()
+
+        # Write one row
+        writer.writerow(sensor_data)
 
 
 def print_sensor_data(sensor_data):
