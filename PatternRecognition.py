@@ -5,6 +5,9 @@ import json
 import csv
 import os
 
+from collections import Counter
+from knn_detection import load_knn_model, predict_from_sensors
+
 
 def save_sensor_to_csv(sensor_data, csv_path="sensor_log.csv"):
     """
@@ -60,8 +63,20 @@ def receive(named_pipe, pipe_buffer):
 
 if __name__ == "__main__":
     print("\nRunning Pattern Recognition")
+    
+    try:
+        knn_model = load_knn_model("knn_cooking_model.pkl")
+        print("Loaded KNN model.")
+    except Exception as e:
+        print("Failed to load KNN model:", e)
+        sys.exit(1)
+
     pipe_name = "\\\\.\\pipe\\test_pipe"
     pipe_buffer_size = 512
+
+    # For 5-second voting
+    prediction_buffer = []
+    current_status = None
 
     while True :
         # create named pipe
@@ -89,11 +104,35 @@ if __name__ == "__main__":
                         try:
                             # load json data
                             sensor_data = json.loads(data)
-                            print_sensor_data(sensor_data)
-                            save_sensor_to_csv(sensor_data)
-                            # TODO: add ML steps here
+                            #print_sensor_data(sensor_data)
+                            #save_sensor_to_csv(sensor_data)
+                            temp = float(sensor_data["temperature"])
+                            rh = float(sensor_data["humidity"])
+                            distance = float(sensor_data["us_raw"])
+                            air_quality = float(sensor_data["gas"])
 
+                            label, conf = predict_from_sensors(
+                                temp=temp,
+                                rh=rh,
+                                distance=distance,
+                                air_quality=air_quality,
+                                model_path="knn_cooking_model.pkl"
+                            )
+                            print(f"[1-sec KNN] {label} (conf={conf:.2f})")
 
+                            prediction_buffer.append(label)
+
+                            # ====== Every 5 readings → voting ======
+                            if len(prediction_buffer) >= 5:
+                                counts = Counter(prediction_buffer)
+                                voted_label, vote_count = counts.most_common(1)[0]
+
+                                current_status = voted_label
+                                print(f"[5-sec vote] Final Status = {current_status}  |  Votes = {dict(counts)}")
+
+                                prediction_buffer.clear()
+                            print("-" * 50)
+                            
                         except json.JSONDecodeError:
                             print("Raw message:", data)
                         print("-" * 50)
