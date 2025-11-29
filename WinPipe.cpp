@@ -36,7 +36,7 @@ void WinPipe::send(const char* buffer, int length)
     DWORD bytesWritten;
     if (WriteFile(hPipe, buffer, length, &bytesWritten, nullptr))
     {
-        cout << "Sent data to Pipeline" << endl;
+        // cout << "Sent data to Pipeline" << endl;
     } else
     {
         cerr << "Pipeline closed. Try to reopen..." << endl;
