@@ -90,6 +90,7 @@ if __name__ == "__main__":
                             # load json data
                             sensor_data = json.loads(data)
                             print_sensor_data(sensor_data)
+                            save_sensor_to_csv(sensor_data)
                             # TODO: add ML steps here
 
 
