@@ -8,6 +8,113 @@ import os
 from collections import Counter
 from knn_detection import load_knn_model, predict_from_sensors
 
+# ========================= Audio model config =================================
+import time
+import threading
+import numpy as np
+import sounddevice as sd
+import librosa
+import joblib
+
+AUDIO_MODEL_PATH = "sound_model.pkl"     # your audio RF model
+WINDOW_SECONDS = 3.0                     # length of each audio window in seconds
+SAMPLE_RATE = 16000                      # must match training
+N_MFCC = 20
+CONF_THRESHOLD = 0.6                     # if max probability < threshold -> treat as Unknown
+
+# Shared variables between audio thread and main thread
+audio_label = None
+audio_confidence = 0.0
+audio_lock = threading.Lock()
+
+def extract_features_from_raw(y: np.ndarray, sr: int) -> np.ndarray:
+    """
+    Extract MFCC-based features from a raw audio array.
+    This matches the preprocessing used in realtime_pred.py.
+    """
+    # Ensure mono 1D
+    if y.ndim > 1:
+        y = y[:, 0]
+
+    # Amplitude normalization
+    if np.max(np.abs(y)) > 0:
+        y = y / np.max(np.abs(y))
+
+    # Compute MFCCs
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=N_MFCC)
+
+    # Mean + std along time axis
+    mfcc_mean = mfcc.mean(axis=1)
+    mfcc_std = mfcc.std(axis=1)
+
+    features = np.concatenate([mfcc_mean, mfcc_std])  # length = 2 * N_MFCC
+    return features
+
+
+def audio_detection_thread():
+    """
+    Background thread that continuously listens to the microphone
+    and updates the global audio_label / audio_confidence.
+    Logic is adapted from realtime_pred.main().
+    """
+    global audio_label, audio_confidence
+
+    try:
+        model_obj = joblib.load(AUDIO_MODEL_PATH)
+    except Exception as e:
+        print(f"[AUDIO] Failed to load {AUDIO_MODEL_PATH}: {e}")
+        return
+
+    rf = model_obj["rf"]
+    le = model_obj["label_encoder"]
+    sr_model = model_obj.get("sample_rate", SAMPLE_RATE)
+
+    if sr_model != SAMPLE_RATE:
+        print(f"[AUDIO] Warning: model sample_rate={sr_model}, but using {SAMPLE_RATE}")
+
+    print("=== Audio thread: real-time cooking sound detection started ===")
+
+    try:
+        while True:
+            # Record one audio window
+            frames = int(WINDOW_SECONDS * SAMPLE_RATE)
+            audio = sd.rec(
+                frames,
+                samplerate=SAMPLE_RATE,
+                channels=1,
+                dtype="float32"
+            )
+            sd.wait()  # wait until recording is finished
+
+            y = audio.squeeze()
+            feat = extract_features_from_raw(y, SAMPLE_RATE).reshape(1, -1)
+
+            # Predict probabilities with RF
+            proba = rf.predict_proba(feat)[0]
+            pred_idx = int(np.argmax(proba))
+            confidence = float(proba[pred_idx])
+
+            pred_label = le.inverse_transform([pred_idx])[0]
+            timestamp = time.strftime("%H:%M:%S")
+
+            if confidence < CONF_THRESHOLD:
+                display_label = "Unknown / silence"
+            else:
+                display_label = pred_label
+
+            # Update shared variables
+            with audio_lock:
+                audio_label = display_label
+                audio_confidence = confidence
+
+            # Optional: print audio-only prediction stream
+            print(f"[AUDIO {timestamp}] {display_label} (p={confidence:.2f})")
+
+    except KeyboardInterrupt:
+        print("\n[AUDIO] Stopped audio thread.")
+
+# ==============================================================================
+
 
 def save_sensor_to_csv(sensor_data, csv_path="sensor_log.csv"):
     """
@@ -64,6 +171,9 @@ def receive(named_pipe, pipe_buffer):
 if __name__ == "__main__":
     print("\nRunning Pattern Recognition")
     
+    audio_thread = threading.Thread(target=audio_detection_thread, daemon=True)
+    audio_thread.start()
+
     try:
         knn_model = load_knn_model("knn_cooking_model.pkl")
         print("Loaded KNN model.")
@@ -129,6 +239,19 @@ if __name__ == "__main__":
 
                                 current_status = voted_label
                                 print(f"[5-sec vote] Final Status = {current_status}  |  Votes = {dict(counts)}")
+
+
+                                # ---- only when cooking, also show audio model result ----
+                                if current_status and "cooking" in current_status.lower():
+                                    with audio_lock:
+                                        local_audio_label = audio_label
+                                        local_audio_conf = audio_confidence
+
+                                    if local_audio_label is not None:
+                                        print(f"[COMBINED] Status={current_status} | "
+                                            f"Cooking sound={local_audio_label} (p={local_audio_conf:.2f})")
+                                    else:
+                                        print(f"[COMBINED] Status={current_status} | Cooking sound=No audio prediction yet")
 
                                 prediction_buffer.clear()
                             print("-" * 50)
