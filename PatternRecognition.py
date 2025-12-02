@@ -27,6 +27,14 @@ audio_label = None
 audio_confidence = 0.0
 audio_lock = threading.Lock()
 
+# ===== Kalman Filter for distance =====
+kf_x = 800.0       # initial guess (mm)
+kf_P = 500.0       # initial uncertainty
+kf_Q = 50.0        # process noise
+kf_R = 300.0       # measurement noise
+kf_threshold = 600 # outlier threshold (mm)
+
+
 def extract_features_from_raw(y: np.ndarray, sr: int) -> np.ndarray:
     """
     Extract MFCC-based features from a raw audio array.
@@ -219,6 +227,25 @@ if __name__ == "__main__":
                             temp = float(sensor_data["temperature"])
                             rh = float(sensor_data["humidity"])
                             distance = float(sensor_data["us_raw"])
+                            # raw_d = float(sensor_data["us_raw"])
+
+                            # # KF prediction
+                            # kf_x_pred = kf_x
+                            # kf_P_pred = kf_P + kf_Q
+
+                            # # Outlier handling（0 或跳动太大）
+                            # if raw_d == 0 or abs(raw_d - kf_x_pred) > kf_threshold:
+                            #     # skip update
+                            #     kf_x = kf_x_pred
+                            #     kf_P = kf_P_pred
+                            # else:
+                            #     # Normal KF update
+                            #     K = kf_P_pred / (kf_P_pred + kf_R)
+                            #     kf_x = kf_x_pred + K * (raw_d - kf_x_pred)
+                            #     kf_P = (1 - K) * kf_P_pred
+
+                            # distance = kf_x      # ← 用滤波后的distance喂KNN
+
                             air_quality = float(sensor_data["gas"])
 
                             label, conf = predict_from_sensors(
