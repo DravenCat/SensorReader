@@ -149,7 +149,7 @@ def predict_from_sensors(temp, rh, distance, air_quality, model_path=MODEL_PATH)
 if __name__ == "__main__":
     # 1) First: train and save the model
     #    Change this path to your own CSV file path.
-    csv_path = r"C:\Users\shuqi\UofT\MIE1050\Project\sensor_log.csv"
+    csv_path = r"C:\Users\shuqi\UofT\MIE1050\Project\SensorReader\sensor_log.csv"
     train_and_save_knn(csv_path, k=5, model_path=MODEL_PATH)
 
     # 2) Later (or in another script), you can call predict_from_sensors(...)
