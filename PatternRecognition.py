@@ -16,7 +16,7 @@ import sounddevice as sd
 import librosa
 import joblib
 
-AUDIO_MODEL_PATH = "sound_model.pkl"     # your audio RF model
+AUDIO_MODEL_PATH = "./ml_sound/sound_model.pkl"     # your audio RF model
 WINDOW_SECONDS = 3.0                     # length of each audio window in seconds
 SAMPLE_RATE = 16000                      # must match training
 N_MFCC = 20
