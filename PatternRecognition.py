@@ -108,7 +108,7 @@ def audio_detection_thread():
                 audio_confidence = confidence
 
             # Optional: print audio-only prediction stream
-            print(f"[AUDIO {timestamp}] {display_label} (p={confidence:.2f})")
+            # print(f"[AUDIO {timestamp}] {display_label} (p={confidence:.2f})")
 
     except KeyboardInterrupt:
         print("\n[AUDIO] Stopped audio thread.")
@@ -228,7 +228,7 @@ if __name__ == "__main__":
                                 air_quality=air_quality,
                                 model_path="knn_cooking_model.pkl"
                             )
-                            print(f"[1-sec KNN] {label} (conf={conf:.2f})")
+                            # print(f"[1-sec KNN] {label} (conf={conf:.2f})")
 
                             prediction_buffer.append(label)
 
@@ -242,7 +242,7 @@ if __name__ == "__main__":
 
 
                                 # ---- only when cooking, also show audio model result ----
-                                if current_status and "cooking" in current_status.lower():
+                                if current_status and "cooking," in current_status.lower():
                                     with audio_lock:
                                         local_audio_label = audio_label
                                         local_audio_conf = audio_confidence
