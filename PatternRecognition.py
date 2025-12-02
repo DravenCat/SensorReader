@@ -16,7 +16,7 @@ import sounddevice as sd
 import librosa
 import joblib
 
-AUDIO_MODEL_PATH = "sound_model.pkl"     # your audio RF model
+AUDIO_MODEL_PATH = "./ml_sound/sound_model.pkl"     # your audio RF model
 WINDOW_SECONDS = 3.0                     # length of each audio window in seconds
 SAMPLE_RATE = 16000                      # must match training
 N_MFCC = 20
@@ -242,7 +242,7 @@ if __name__ == "__main__":
 
 
                                 # ---- only when cooking, also show audio model result ----
-                                if current_status and "Cooking" in current_status.lower():
+                                if current_status and "cooking" in current_status.lower():
                                     with audio_lock:
                                         local_audio_label = audio_label
                                         local_audio_conf = audio_confidence
