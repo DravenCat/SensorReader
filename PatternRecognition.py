@@ -242,7 +242,7 @@ if __name__ == "__main__":
 
 
                                 # ---- only when cooking, also show audio model result ----
-                                if current_status and "Cooking" in current_status.lower():
+                                if current_status and "cooking" in current_status.lower():
                                     with audio_lock:
                                         local_audio_label = audio_label
                                         local_audio_conf = audio_confidence
